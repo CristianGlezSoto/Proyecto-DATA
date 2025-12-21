@@ -12,55 +12,46 @@ st.set_page_config(
 
 st.title("🚗 Predicción de Precio de Automóviles")
 st.write(
-    "Esta aplicación estima el precio de un automóvil usando un modelo "
-    "Random Forest entrenado con datos reales."
+    "Esta aplicación estima el precio de un automóvil utilizando "
+    "un modelo Random Forest entrenado previamente."
 )
 
 # ======================================================
-# CARGA DE OBJETOS DEL MODELO
+# CARGA DEL MODELO Y COLUMNAS
 # ======================================================
 @st.cache_resource
-def load_objects():
+def load_model():
     model = joblib.load("model.pkl")
-    le = joblib.load("label_encoder.pkl")
-    columns = joblib.load("model_columns.pkl")
-    return model, le, columns
+    model_columns = joblib.load("model_columns.pkl")
+    return model, model_columns
 
-model, le, model_columns = load_objects()
+model, model_columns = load_model()
 
 # ======================================================
-# INTERFAZ DE ENTRADA
+# ENTRADAS DEL USUARIO
 # ======================================================
 st.header("📋 Características del vehículo")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    manufacturer = st.selectbox(
-        "Manufacturer",
-        sorted(le.classes_)
-    )
-
+    manufacturer = st.text_input("Manufacturer", "Toyota")
     category = st.selectbox(
         "Category",
         ["Sedan", "SUV", "Hatchback", "Coupe", "Universal"]
     )
-
     fuel_type = st.selectbox(
         "Fuel type",
         ["Petrol", "Diesel", "Hybrid", "Electric"]
     )
-
     gearbox = st.selectbox(
         "Gear box type",
         ["Automatic", "Manual"]
     )
-
     drive = st.selectbox(
         "Drive wheels",
         ["Front", "Rear", "4x4"]
     )
-
     leather = st.selectbox(
         "Leather interior",
         ["Yes", "No"]
@@ -69,51 +60,37 @@ with col1:
 with col2:
     engine_volume = st.slider(
         "Engine volume (L)",
-        min_value=0.8,
-        max_value=6.0,
-        value=2.0,
-        step=0.1
+        0.8, 6.0, 2.0, 0.1
     )
-
     has_turbo = st.selectbox(
         "Turbo",
         ["No", "Yes"]
     )
-
     mileage = st.slider(
         "Mileage (km)",
-        0,
-        500_000,
-        60_000,
-        step=1_000
+        0, 500_000, 60_000, 1_000
     )
-
     doors = st.selectbox(
         "Doors",
         [2, 3, 4, 5]
     )
-
     year = st.slider(
         "Production year",
-        1990,
-        2025,
-        2018
+        1990, 2025, 2018
     )
-
     levy = st.number_input(
         "Levy",
         min_value=0,
         max_value=10_000,
         value=0
     )
-
     color = st.selectbox(
         "Color",
         ["Black", "White", "Silver", "Blue", "Red", "Grey", "Other"]
     )
 
 # ======================================================
-# BOTÓN DE PREDICCIÓN
+# PREDICCIÓN
 # ======================================================
 st.markdown("---")
 
@@ -140,19 +117,13 @@ if st.button("💰 Predecir precio", use_container_width=True):
 
     df_input = pd.DataFrame([input_data])
 
-    # ==================================================
-    # PREPROCESAMIENTO
-    # ==================================================
-    df_input["Manufacturer"] = le.transform(df_input["Manufacturer"])
-
+    # One-hot encoding
     df_input = pd.get_dummies(df_input)
 
-    # Alinear columnas exactamente como el modelo
+    # Alinear columnas exactamente con las del modelo
     df_input = df_input.reindex(columns=model_columns, fill_value=0)
 
-    # ==================================================
-    # PREDICCIÓN
-    # ==================================================
+    # Predicción
     prediction = model.predict(df_input)[0]
 
     st.success(f"💵 Precio estimado: **${prediction:,.0f}**")
