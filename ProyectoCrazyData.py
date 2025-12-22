@@ -116,9 +116,9 @@ with st.sidebar.expander("⚙️ Motor y desempeño"):
         [0.8, 1.0, 1.3, 1.6, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0]
     )
 
-    has_turbo = st.radio(
-        "Turbo",
-        ["Yes", "No"]
+    gear_box = st.radio(
+        "Transmisión",
+        ["Automatic", "Manual"]
     )
 
     fuel_type = st.selectbox(
@@ -131,7 +131,20 @@ with st.sidebar.expander("⚙️ Motor y desempeño"):
         ["Front", "Rear", "4x4"]
     )
 
-with st.sidebar.expander("🛋️ Interior y seguridad"):
+    mileage = st.number_input(
+        "Kilometraje total",
+        min_value=0,
+        max_value=500_000,
+        value=50_000,
+        step=1_000
+    )
+
+    has_turbo = st.radio(
+        "Turbo",
+        ["Yes", "No"]
+    )
+
+with st.sidebar.expander("🛡️ Diseño y seguridad"):
     leather_interior = st.radio(
         "Interior de cuero",
         ["Yes", "No"]
@@ -154,27 +167,13 @@ with st.sidebar.expander("🛋️ Interior y seguridad"):
         ["Left wheel", "Right wheel"]
     )
 
-with st.sidebar.expander("📦 Otros detalles"):
-    gear_box = st.radio(
-        "Transmisión",
-        ["Automatic", "Manual"]
-    )
-
     doors = st.number_input(
         "Número de puertas",
         min_value=2,
         max_value=5,
         value=4
     )
-
-    mileage = st.number_input(
-        "Kilometraje total",
-        min_value=0,
-        max_value=500_000,
-        value=50_000,
-        step=1_000
-    )
-
+    
 # ======================================================
 # MONEDA
 # ======================================================
