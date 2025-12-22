@@ -1,19 +1,67 @@
 import streamlit as st
 import pandas as pd
 import joblib
+from datetime import datetime
 
-# ===============================
+# ======================================================
 # CONFIGURACIÓN GENERAL
-# ===============================
+# ======================================================
 st.set_page_config(
     page_title="Predicción de Precio de Autos",
     page_icon="🚗",
     layout="centered"
 )
 
-# ===============================
-# CARGA DE MODELO Y COLUMNAS
-# ===============================
+# ======================================================
+# CSS PERSONALIZADO (UI PROFESIONAL)
+# ======================================================
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #f8fafc;
+    }
+    div[data-testid="stSidebar"] {
+        background-color: #f1f5f9;
+        padding: 20px;
+    }
+    .result-card {
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        padding: 35px;
+        border-radius: 18px;
+        text-align: center;
+        color: white;
+        margin-top: 25px;
+        box-shadow: 0px 10px 25px rgba(0,0,0,0.15);
+    }
+    .result-card h1 {
+        margin: 10px 0;
+        font-size: 42px;
+    }
+    .result-card p {
+        opacity: 0.85;
+        margin: 0;
+    }
+    .section-title {
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+    .stButton>button {
+        background-color: #2563eb;
+        color: white;
+        border-radius: 12px;
+        height: 3em;
+        font-size: 16px;
+        width: 100%;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# ======================================================
+# CARGA DE MODELO
+# ======================================================
 @st.cache_resource
 def load_objects():
     model = joblib.load("model.pkl")
@@ -22,120 +70,124 @@ def load_objects():
 
 model, model_columns = load_objects()
 
-# ===============================
+# ======================================================
+# HISTORIAL
+# ======================================================
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+# ======================================================
 # HEADER
-# ===============================
+# ======================================================
 st.title("🚗 Predicción de Precio de Autos")
 st.markdown(
-    """
-    Estima el **precio de mercado** de un automóvil utilizando un modelo
-    de **Machine Learning (Random Forest)** entrenado con datos reales.
-    """
+    "Calcula el **precio estimado de mercado** de un automóvil usando "
+    "**Machine Learning (Random Forest)**."
 )
 
 st.divider()
 
-# ===============================
-# SIDEBAR - INPUTS
-# ===============================
-st.sidebar.header("Características del vehículo")
+# ======================================================
+# SIDEBAR - INPUTS AGRUPADOS
+# ======================================================
+st.sidebar.title("Configuración")
 
-manufacturer = st.sidebar.selectbox(
-    "Fabricante",
-    sorted([
-        "Toyota", "BMW", "Mercedes-Benz", "Audi", "Hyundai",
-        "Kia", "Ford", "Chevrolet", "Nissan", "Honda"
-    ])
-)
+with st.sidebar.expander("🚘 Información general", expanded=True):
+    manufacturer = st.selectbox(
+        "Fabricante (buscar)",
+        sorted([
+            "Toyota", "BMW", "Mercedes-Benz", "Audi", "Hyundai",
+            "Kia", "Ford", "Chevrolet", "Nissan", "Honda",
+            "Mazda", "Volkswagen", "Subaru", "Volvo", "Lexus"
+        ])
+    )
 
-category = st.sidebar.selectbox(
-    "Categoría",
-    ["Sedan", "SUV", "Hatchback", "Coupe", "Universal"]
-)
+    category = st.selectbox(
+        "Categoría",
+        ["Sedan", "SUV", "Hatchback", "Coupe", "Universal"]
+    )
 
-fuel_type = st.sidebar.selectbox(
-    "Tipo de combustible",
-    ["Petrol", "Diesel", "Hybrid", "Electric"]
-)
+    prod_year = st.number_input(
+        "Año de producción",
+        1980, 2025, 2018
+    )
 
-# -------------------------------
-# OPCIONES BINARIAS (RADIO)
-# -------------------------------
-gear_box = st.sidebar.radio(
-    "Transmisión",
-    ["Automatic", "Manual"]
-)
+with st.sidebar.expander("⚙️ Motor y desempeño"):
+    engine_volume = st.selectbox(
+        "Motor (L)",
+        [0.8, 1.0, 1.3, 1.6, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0]
+    )
 
-leather_interior = st.sidebar.radio(
-    "Interior de cuero",
-    ["Yes", "No"]
-)
+    has_turbo_option = st.radio(
+        "Turbo",
+        ["Yes", "No"]
+    )
+    has_turbo = 1 if has_turbo_option == "Yes" else 0
 
-wheel = st.sidebar.radio(
-    "Tipo de volante",
-    ["Left wheel", "Right wheel"]
-)
+    fuel_type = st.selectbox(
+        "Tipo de combustible",
+        ["Petrol", "Diesel", "Hybrid", "Electric"]
+    )
 
-has_turbo_option = st.sidebar.radio(
-    "Turbo",
-    ["Yes", "No"]
-)
-has_turbo = 1 if has_turbo_option == "Yes" else 0
+    drive_wheels = st.selectbox(
+        "Tracción",
+        ["Front", "Rear", "4x4"]
+    )
 
-# -------------------------------
-# RESTO DE VARIABLES
-# -------------------------------
-drive_wheels = st.sidebar.selectbox(
-    "Tracción",
-    ["Front", "Rear", "4x4"]
-)
+with st.sidebar.expander("🛋️ Interior y confort"):
+    leather_interior = st.radio(
+        "Interior de cuero",
+        ["Yes", "No"]
+    )
 
-color = st.sidebar.selectbox(
-    "Color",
-    ["Black", "White", "Silver", "Gray", "Blue", "Red"]
-)
+    airbags = st.number_input(
+        "Número de airbags",
+        0, 12, 2
+    )
 
-doors = st.sidebar.number_input(
-    "Número de puertas",
-    min_value=2,
-    max_value=5,
-    value=4,
-    step=1
-)
+    color = st.selectbox(
+        "Color",
+        ["Black", "White", "Silver", "Gray", "Blue", "Red"]
+    )
 
-engine_volume = st.sidebar.selectbox(
-    "Motor (L)",
-    [0.8, 1.0, 1.3, 1.6, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0]
-)
+    wheel = st.radio(
+        "Tipo de volante",
+        ["Left wheel", "Right wheel"]
+    )
 
-mileage = st.sidebar.number_input(
-    "Kilometraje",
-    min_value=0,
-    max_value=500_000,
-    value=50_000,
-    step=1_000
-)
+with st.sidebar.expander("📦 Otros detalles"):
+    gear_box = st.radio(
+        "Transmisión",
+        ["Automatic", "Manual"]
+    )
 
-levy = st.sidebar.number_input(
-    "Levy",
-    min_value=0,
-    max_value=10_000,
-    value=0
-)
+    doors = st.number_input(
+        "Número de puertas",
+        2, 5, 4
+    )
 
-prod_year = st.sidebar.number_input(
-    "Año de producción",
-    min_value=1980,
-    max_value=2025,
-    value=2018,
-    step=1
-)
+    mileage = st.number_input(
+        "Kilometraje total",
+        0, 500_000, 50_000, step=1_000
+    )
+
+    levy = st.number_input(
+        "Levy",
+        0, 10_000, 0
+    )
+
+# ======================================================
+# MONEDA (AL FINAL)
+# ======================================================
+st.sidebar.divider()
+show_mxn = st.sidebar.checkbox("Convertir precio a MXN")
+usd_to_mxn = 17.0
 
 car_age = 2025 - prod_year
 
-# ===============================
+# ======================================================
 # DATAFRAME DE ENTRADA
-# ===============================
+# ======================================================
 input_data = {
     "Manufacturer": manufacturer,
     "Category": category,
@@ -147,6 +199,7 @@ input_data = {
     "Color": color,
     "Doors": doors,
     "Engine volume": engine_volume,
+    "Airbags": airbags,
     "Has_Turbo": has_turbo,
     "Mileage": mileage,
     "Levy": levy,
@@ -154,32 +207,68 @@ input_data = {
 }
 
 df_input = pd.DataFrame([input_data])
-
-# One-hot encoding
 df_input = pd.get_dummies(df_input)
-
-# Alinear columnas con el modelo
 df_input = df_input.reindex(columns=model_columns, fill_value=0)
 
-# ===============================
+# ======================================================
 # PREDICCIÓN
-# ===============================
+# ======================================================
 st.divider()
 
-if st.button("🔮 Predecir precio"):
-    prediction = model.predict(df_input)[0]
+if st.button("Calcular precio estimado"):
+    price_usd = model.predict(df_input)[0]
 
-    st.subheader("Resultado de la predicción")
-    st.metric(
-        label="Precio estimado",
-        value=f"${prediction:,.0f}"
+    if show_mxn:
+        price = price_usd * usd_to_mxn
+        currency = "MXN"
+    else:
+        price = price_usd
+        currency = "USD"
+
+    # TARJETA DE RESULTADO
+    st.markdown(
+        f"""
+        <div class="result-card">
+            <p>Precio estimado ({currency})</p>
+            <h1>${price:,.0f}</h1>
+            <p>Estimación basada en datos históricos</p>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
-# ===============================
+    # GUARDAR HISTORIAL
+    st.session_state.history.append({
+        "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "Fabricante": manufacturer,
+        "Año": prod_year,
+        "Precio": f"${price:,.0f}",
+        "Moneda": currency
+    })
+
+# ======================================================
+# HISTORIAL
+# ======================================================
+if st.session_state.history:
+    st.divider()
+
+    col1, col2 = st.columns([4, 1])
+    with col1:
+        st.subheader("📊 Historial de predicciones")
+    with col2:
+        if st.button("🗑️ Limpiar"):
+            st.session_state.history = []
+
+    st.dataframe(
+        pd.DataFrame(st.session_state.history),
+        use_container_width=True
+    )
+
+# ======================================================
 # FOOTER
-# ===============================
+# ======================================================
 st.divider()
 st.caption(
-    "Modelo Random Forest. El precio estimado es una aproximación basada en patrones históricos."
+    "Aplicación demostrativa con fines académicos y de portafolio profesional."
 )
 
