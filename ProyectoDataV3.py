@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
+from datetime import datetime
 
 # ===============================
 # CONFIGURACIÓN GENERAL
@@ -39,7 +40,7 @@ st.markdown(
 )
 
 # ===============================
-# CARGA DE MODELO
+# CARGA DEL MODELO
 # ===============================
 @st.cache_resource
 def load_objects():
@@ -50,36 +51,32 @@ def load_objects():
 model, model_columns = load_objects()
 
 # ===============================
+# HISTORIAL (SESSION STATE)
+# ===============================
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+# ===============================
 # HEADER
 # ===============================
 st.title("🚗 Predicción de Precio de Autos")
-st.markdown(
-    "Estimación del **precio de mercado** mediante un modelo de *Random Forest*."
-)
+st.markdown("Estimación del **precio de mercado** mediante *Machine Learning*.")
 
 st.divider()
-
-# ===============================
-# SIDEBAR - CONFIGURACIÓN
-# ===============================
-st.sidebar.header("Configuración")
-
-currency = st.sidebar.selectbox(
-    "Moneda",
-    ["MXN", "USD"]
-)
-
-usd_to_mxn = 17.0  # tipo de cambio fijo visual
 
 # ===============================
 # SIDEBAR - INPUTS
 # ===============================
 st.sidebar.header("Características del vehículo")
 
+# Autocompletar con selectbox
 manufacturer = st.sidebar.selectbox(
-    "Fabricante",
-    ["Toyota", "BMW", "Mercedes-Benz", "Audi", "Hyundai",
-     "Kia", "Ford", "Chevrolet", "Nissan", "Honda"]
+    "Fabricante (buscar escribiendo)",
+    sorted([
+        "Toyota", "BMW", "Mercedes-Benz", "Audi", "Hyundai",
+        "Kia", "Ford", "Chevrolet", "Nissan", "Honda",
+        "Mazda", "Volkswagen", "Subaru", "Volvo", "Lexus"
+    ])
 )
 
 category = st.sidebar.selectbox(
@@ -135,10 +132,7 @@ engine_volume = st.sidebar.selectbox(
 
 airbags = st.sidebar.number_input(
     "Número de airbags",
-    min_value=0,
-    max_value=12,
-    value=2,
-    step=1
+    0, 12, 2
 )
 
 mileage = st.sidebar.number_input(
@@ -157,6 +151,14 @@ prod_year = st.sidebar.number_input(
 )
 
 car_age = 2025 - prod_year
+
+# ===============================
+# MONEDA (AL FINAL)
+# ===============================
+st.sidebar.divider()
+show_mxn = st.sidebar.checkbox("Mostrar precio en MXN")
+
+usd_to_mxn = 17.0
 
 # ===============================
 # DATAFRAME DE ENTRADA
@@ -189,26 +191,42 @@ df_input = df_input.reindex(columns=model_columns, fill_value=0)
 st.divider()
 
 if st.button("🔮 Predecir precio"):
-    price = model.predict(df_input)[0]
+    price_usd = model.predict(df_input)[0]
 
-    if currency == "MXN":
-        price = price * usd_to_mxn
-        symbol = "$"
-        label = "Precio estimado (MXN)"
+    if show_mxn:
+        price = price_usd * usd_to_mxn
+        currency = "MXN"
     else:
-        symbol = "$"
-        label = "Precio estimado (USD)"
+        price = price_usd
+        currency = "USD"
 
     st.subheader("Resultado de la predicción")
     st.metric(
-        label=label,
-        value=f"{symbol}{price:,.0f}"
+        label=f"Precio estimado ({currency})",
+        value=f"${price:,.0f}"
     )
+
+    # Guardar en historial
+    st.session_state.history.append({
+        "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "Fabricante": manufacturer,
+        "Año": prod_year,
+        "Precio": f"${price:,.0f}",
+        "Moneda": currency
+    })
+
+# ===============================
+# HISTORIAL DE PREDICCIONES
+# ===============================
+if st.session_state.history:
+    st.divider()
+    st.subheader("📊 Historial de predicciones")
+    history_df = pd.DataFrame(st.session_state.history)
+    st.dataframe(history_df, use_container_width=True)
 
 # ===============================
 # FOOTER
 # ===============================
 st.divider()
-st.caption(
-    "Aplicación demostrativa con fines académicos y de portafolio."
-)
+st.caption("Aplicación demostrativa para portafolio académico/profesional.")
+
