@@ -58,22 +58,37 @@ fuel_type = st.sidebar.selectbox(
     ["Petrol", "Diesel", "Hybrid", "Electric"]
 )
 
-# Checkbox para transmisión
-automatic = st.sidebar.checkbox("Transmisión automática")
-gear_box = "Automatic" if automatic else "Manual"
+# -------------------------------
+# OPCIONES BINARIAS (RADIO)
+# -------------------------------
+gear_box = st.sidebar.radio(
+    "Transmisión",
+    ["Automatic", "Manual"]
+)
 
-# Checkbox para interior de cuero
-leather_checked = st.sidebar.checkbox("Interior de cuero")
-leather_interior = "Yes" if leather_checked else "No"
+leather_interior = st.sidebar.radio(
+    "Interior de cuero",
+    ["Yes", "No"]
+)
 
+wheel = st.sidebar.radio(
+    "Tipo de volante",
+    ["Left wheel", "Right wheel"]
+)
+
+has_turbo_option = st.sidebar.radio(
+    "Turbo",
+    ["Yes", "No"]
+)
+has_turbo = 1 if has_turbo_option == "Yes" else 0
+
+# -------------------------------
+# RESTO DE VARIABLES
+# -------------------------------
 drive_wheels = st.sidebar.selectbox(
     "Tracción",
     ["Front", "Rear", "4x4"]
 )
-
-# Checkbox para volante
-left_wheel_checked = st.sidebar.checkbox("Volante izquierdo")
-wheel = "Left wheel" if left_wheel_checked else "Right wheel"
 
 color = st.sidebar.selectbox(
     "Color",
@@ -88,12 +103,10 @@ doors = st.sidebar.number_input(
     step=1
 )
 
-engine_volume = st.sidebar.slider(
+engine_volume = st.sidebar.selectbox(
     "Motor (L)",
-    0.8, 6.0, 2.0
+    [0.8, 1.0, 1.3, 1.6, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0]
 )
-
-has_turbo = st.sidebar.checkbox("Turbo")
 
 mileage = st.sidebar.number_input(
     "Kilometraje",
@@ -110,7 +123,6 @@ levy = st.sidebar.number_input(
     value=0
 )
 
-# Año de producción (reemplaza edad)
 prod_year = st.sidebar.number_input(
     "Año de producción",
     min_value=1980,
@@ -135,7 +147,7 @@ input_data = {
     "Color": color,
     "Doors": doors,
     "Engine volume": engine_volume,
-    "Has_Turbo": int(has_turbo),
+    "Has_Turbo": has_turbo,
     "Mileage": mileage,
     "Levy": levy,
     "Car_Age": car_age
@@ -168,5 +180,6 @@ if st.button("🔮 Predecir precio"):
 # ===============================
 st.divider()
 st.caption(
-    "Modelo Random Forest. El resultado es una estimación basada en patrones históricos."
+    "Modelo Random Forest. El precio estimado es una aproximación basada en patrones históricos."
 )
+
