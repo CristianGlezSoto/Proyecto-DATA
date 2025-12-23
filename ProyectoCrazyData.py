@@ -264,6 +264,6 @@ if st.session_state.history:
 # ======================================================
 st.divider()
 st.caption(
-    "Aplicación demostrativa con fines académicos y de portafolio."
+    "Aplicación demostrativa con fines académicos y de portafolio. Desarrollado por: Angel Jared Fitch Machado, Cristian Gonzalez Soto y Luis Alberto Torres López."
 )
 
